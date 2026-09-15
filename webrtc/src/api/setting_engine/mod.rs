@@ -30,6 +30,14 @@ pub struct Timeout {
     pub ice_srflx_acceptance_min_wait: Option<Duration>,
     pub ice_prflx_acceptance_min_wait: Option<Duration>,
     pub ice_relay_acceptance_min_wait: Option<Duration>,
+    /// How many binding requests the ICE agent sends on a candidate pair
+    /// without a response before marking it failed. `None` keeps the ICE
+    /// crate's default (7, i.e. ~1.4s at the default 200ms check interval).
+    pub ice_max_binding_requests: Option<u16>,
+    /// How often the ICE agent runs a connectivity-check tick, sending one
+    /// binding request on each pair still waiting for a response. `None`
+    /// keeps the ICE crate's default (200ms).
+    pub ice_check_interval: Option<Duration>,
 }
 
 #[derive(Default, Clone)]
@@ -116,6 +124,26 @@ impl SettingEngine {
         self.timeout.ice_disconnected_timeout = disconnected_timeout;
         self.timeout.ice_failed_timeout = failed_timeout;
         self.timeout.ice_keepalive_interval = keep_alive_interval;
+    }
+
+    /// set_ice_max_binding_requests sets how many binding requests are sent on
+    /// a candidate pair without a response before the pair is marked failed.
+    /// The ICE crate defaults to 7 (~1.4s at its 200ms check interval); a peer
+    /// behind an address-restricted NAT needs those requests to keep its
+    /// mapping open for the remote's checks, so a longer run lets a pair
+    /// still connect once the path clears.
+    pub fn set_ice_max_binding_requests(&mut self, n: Option<u16>) {
+        self.timeout.ice_max_binding_requests = n;
+    }
+
+    /// set_ice_check_interval sets how often the ICE agent sends a binding
+    /// request on each candidate pair still waiting for a response. The ICE
+    /// crate defaults to 200ms; RFC 8445 section 14.2 puts the default pacing
+    /// (Ta) at 50ms with a 5ms floor, so a shorter interval both refreshes the
+    /// local NAT mapping more often and lands more checks inside the window
+    /// the remote is knocking. `None` keeps the crate default.
+    pub fn set_ice_check_interval(&mut self, t: Option<Duration>) {
+        self.timeout.ice_check_interval = t;
     }
 
     /// set_host_acceptance_min_wait sets the icehost_acceptance_min_wait
