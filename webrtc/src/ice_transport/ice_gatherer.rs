@@ -118,6 +118,13 @@ impl RTCIceGatherer {
             srflx_acceptance_min_wait: self.setting_engine.timeout.ice_srflx_acceptance_min_wait,
             prflx_acceptance_min_wait: self.setting_engine.timeout.ice_prflx_acceptance_min_wait,
             relay_acceptance_min_wait: self.setting_engine.timeout.ice_relay_acceptance_min_wait,
+            max_binding_requests: self.setting_engine.timeout.ice_max_binding_requests,
+            // The ICE crate reads a zero interval as "use the default" (200ms).
+            check_interval: self
+                .setting_engine
+                .timeout
+                .ice_check_interval
+                .unwrap_or_default(),
             interface_filter: self.setting_engine.candidates.interface_filter.clone(),
             ip_filter: self.setting_engine.candidates.ip_filter.clone(),
             nat_1to1_ips: self.setting_engine.candidates.nat_1to1_ips.clone(),
